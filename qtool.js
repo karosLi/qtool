@@ -5,6 +5,7 @@
  * @author karos
  */
 
+var os = require('os');
 var fs = require('fs');
 var path = require('path');
 var util = require('util')
@@ -18,12 +19,12 @@ var glob = require('glob');
 var readdir = thunkify(glob);
 
 (function() {
-  program.version('0.0.1')
+  program.version('0.0.5')
     .usage('One tool to upload resource to qinniu')
     .option('-f, --folder <string>', 'Image forder')
-    .option('-a, --accessKey <string>', 'Access Key')
-    .option('-s, --secretKey <string>', 'Secret Key')
-    .option('-b, --bucket <string>', 'Bucket to store image')
+    .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
+    .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
+    .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
     .parse(process.argv)
 
     var accessKey = program.accessKey;
@@ -31,37 +32,51 @@ var readdir = thunkify(glob);
     var bucket = program.bucket;
     var folder = program.folder;
 
-    if (typeof(folder) === 'undefined') {
+    var needUpdateKey = false;
+    var qtoolJson = readKey();
+
+    if (isUndifined(folder)) {
       console.log('Missing parameter folder');
       return;
     }
 
-    if (typeof(accessKey) === 'undefined') {
+    if (isUndifined(accessKey) && isUndifined(qtoolJson.accessKey)) {
       console.log('Missing parameter accessKey');
       return;
+    } else if (!isUndifined(accessKey)) {
+      qtoolJson.accessKey = accessKey;
+      needUpdateKey = true;
     }
 
-    if (typeof(secretKey) === 'undefined') {
+    if (isUndifined(secretKey) && isUndifined(qtoolJson.secretKey)) {
       console.log('Missing parameter secretKey');
       return;
+    } else if (!isUndifined(secretKey)) {
+      qtoolJson.secretKey = secretKey;
+      needUpdateKey = true;
     }
 
-    if (typeof(bucket) === 'undefined') {
+    folder = path.resolve(folder);
+    if (isUndifined(bucket) && isUndifined(qtoolJson[folder])) {
       console.log('Missing parameter bucket');
       return;
+    } else if (!isUndifined(bucket)) {
+      qtoolJson[folder] = bucket;
+      needUpdateKey = true;
     }
 
-    uploadImageToCdn(folder, accessKey, secretKey, bucket);
+    needUpdateKey && writeKey(qtoolJson);
+    uploadResourceToCdn(folder, qtoolJson.accessKey, qtoolJson.secretKey, qtoolJson[folder]);
 })();
 
-function* getImagesPath(folder) {
-  var pattern = folder + '/**/*.{jpg,png,svg}';
+function* getResourcesPath(folder) {
+  var pattern = folder + '/**/*.{jpg,png,svg,html,js,css}';
   var files = yield readdir(pattern, {nodir: true, realpath: true});
 
   return files;
 }
 
-function uploadImage(accessKey, secretKey) {
+function uploadResource(accessKey, secretKey) {
   var qiniu = require("qiniu");
   //需要填写你的 Access Key 和 Secret Key
   qiniu.conf.ACCESS_KEY = accessKey;
@@ -101,11 +116,40 @@ function uploadImage(accessKey, secretKey) {
   }
 }
 
-function uploadImageToCdn(foler, accessKey, secretKey, bucket) {
-  var upload = uploadImage(accessKey, secretKey);
-  var baseFolder = path.resolve(foler);
+function isUndifined(value) {
+  return typeof(value) === 'undefined';
+}
 
-  co(getImagesPath(baseFolder)).then(function(files) {
+function writeKey(qtoolJson) {
+  qtoolJson = qtoolJson || {};
+
+  try {
+    var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
+    var configStr = JSON.stringify(qtoolJson, null, 4);
+		fs.writeFileSync(qtoolConfigFilePath, configStr);
+	} catch (err) {
+    console.log(err);
+	}
+}
+
+function readKey() {
+	var qtoolJson;
+	try {
+		var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
+    console.log('Reading key from ' + qtoolConfigFilePath);
+		var qtoolContent = fs.readFileSync(qtoolConfigFilePath);
+		qtoolJson = JSON.parse(qtoolContent);
+	} catch (err) {
+	}
+
+	return qtoolJson || {};
+}
+
+function uploadResourceToCdn(folder, accessKey, secretKey, bucket) {
+  var upload = uploadResource(accessKey, secretKey);
+  var baseFolder = path.resolve(folder);
+
+  co(getResourcesPath(baseFolder)).then(function(files) {
     var allPromise = files.map(function(file) {
       var filePath = file;
       var index = file.indexOf(baseFolder) + baseFolder.length + 1;
