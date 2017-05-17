@@ -4,7 +4,7 @@ One tool to upload images to qinniu
 
 ## install
 ```
-npm install -g qtool
+sudo npm install -g qtool
 ```
 
 ## note
