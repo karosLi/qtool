@@ -1,0 +1,36 @@
+{
+  "name": "qtool",
+  "version": "0.0.1",
+  "description": "One tool to upload images to qinniu",
+  "main": "qtool.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "qtool": "qtool.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karosLi/qtool.git"
+  },
+  "keywords": [
+    "nodejs",
+    "qinniu",
+    "cdn"
+  ],
+  "bugs": {
+    "url": "https://github.com/karosLi/qtool/issues"
+  },
+  "homepage": "https://github.com/karosLi/qtool",
+  "license": "MIT",
+  "author": "karos",
+  "dependencies": {
+    "async": "^2.4.0",
+    "co": "^4.6.0",
+    "commander": "^2.9.0",
+    "glob": "^7.1.1",
+    "promise": "^7.1.1",
+    "qiniu": "^6.1.13",
+    "thunkify": "^2.1.2"
+  }
+}
