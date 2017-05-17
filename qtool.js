@@ -104,9 +104,9 @@ function uploadImage(accessKey, secretKey) {
 
 function uploadImageToCdn(foler, accessKey, secretKey, bucket) {
   var upload = uploadImage(accessKey, secretKey);
+  var baseFolder = path.resolve(foler);
 
-  co(getImagesPath(foler)).then(function(files) {
-    var baseFolder = foler;
+  co(getImagesPath(baseFolder)).then(function(files) {
     var allPromise = files.map(function(file) {
       var filePath = file;
       var index = file.indexOf(baseFolder) + baseFolder.length + 1;
@@ -117,7 +117,7 @@ function uploadImageToCdn(foler, accessKey, secretKey, bucket) {
 
     return allPromise;
   }).then(function() {
-    
+
   }).catch(function(error) {
     console.log(error);
   });
