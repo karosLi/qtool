@@ -13,7 +13,6 @@ var co = require("co");
 var thunkify = require("thunkify");
 
 var program = require('commander');
-var mkdirs = require('node-mkdirs');
 var glob = require('glob');
 
 var readdir = thunkify(glob);
