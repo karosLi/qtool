@@ -19,9 +19,10 @@ var glob = require('glob');
 var readdir = thunkify(glob);
 
 (function() {
-  program.version('0.0.5')
+  program.version('0.0.6')
     .usage('One tool to upload resource to qinniu')
-    .option('-f, --folder <string>', 'Image forder')
+    .option('-f, --folder <string>', 'Resource forder')
+    .option('-k, --keypreffix <string>', 'Key preffix')
     .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
     .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
     .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
@@ -29,6 +30,7 @@ var readdir = thunkify(glob);
 
     var accessKey = program.accessKey;
     var secretKey = program.secretKey;
+    var keypreffix = program.keypreffix;
     var bucket = program.bucket;
     var folder = program.folder;
 
@@ -66,7 +68,7 @@ var readdir = thunkify(glob);
     }
 
     needUpdateKey && writeKey(qtoolJson);
-    uploadResourceToCdn(folder, qtoolJson.accessKey, qtoolJson.secretKey, qtoolJson[folder]);
+    uploadResourceToCdn(folder, keypreffix, qtoolJson.accessKey, qtoolJson.secretKey, qtoolJson[folder]);
 })();
 
 function* getResourcesPath(folder) {
@@ -145,7 +147,7 @@ function readKey() {
 	return qtoolJson || {};
 }
 
-function uploadResourceToCdn(folder, accessKey, secretKey, bucket) {
+function uploadResourceToCdn(folder, keypreffix, accessKey, secretKey, bucket) {
   var upload = uploadResource(accessKey, secretKey);
   var baseFolder = path.resolve(folder);
 
@@ -154,6 +156,9 @@ function uploadResourceToCdn(folder, accessKey, secretKey, bucket) {
       var filePath = file;
       var index = file.indexOf(baseFolder) + baseFolder.length + 1;
       var keyName = file.substring(index);
+      if (!isUndifined(keypreffix)) {
+        keyName = path.join(keypreffix, '/', keyName);
+      }
 
       return upload(filePath, keyName, bucket);
     });

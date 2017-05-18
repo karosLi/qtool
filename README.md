@@ -11,6 +11,7 @@ sudo npm install -g qtool
 ```
 .usage('One tool to upload resource to qinniu')
 .option('-f, --folder <string>', 'Image forder')
+.option('-k, --keypreffix <string>', 'Key preffix')
 .option('-a, --accessKey <string>', 'Access Key')
 .option('-s, --secretKey <string>', 'Secret Key')
 .option('-b, --bucket <string>', 'Bucket to store image')
@@ -18,4 +19,3 @@ sudo npm install -g qtool
 
 ## note
 Any issue please free let me know.
-
