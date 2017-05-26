@@ -4,33 +4,49 @@
  * @file qtool.js
  * @author karos
  */
-
 var os = require('os');
 var fs = require('fs');
 var path = require('path');
-var util = require('util')
+var util = require('util');
 var Promise = require('promise');
 var co = require("co");
-var thunkify = require("thunkify");
-
+var request = require('request');
+var mkdirs = require('node-mkdirs');
 var program = require('commander');
+var path = require('path');
+var qn = require('qn');
 var glob = require('glob');
-
+var thunkify = require("thunkify");
 var readdir = thunkify(glob);
 
-(function() {
-  program.version('0.0.6')
-    .usage('One tool to upload resource to qinniu')
-    .option('-f, --folder <string>', 'Resource forder')
-    .option('-k, --keypreffix <string>', 'Key preffix')
-    .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
-    .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
-    .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
-    .parse(process.argv)
+(function () {
+    program.version('0.1.0')
+        .usage('One tool to upload resource to qinniu')
+        .option('-f, --folder <string>', 'Resource forder')
+        .option('-k, --keypreffix <string>', 'Key preffix')
+        .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
+        .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
+        .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
+        .option('-d, --downloadUrl <string>', 'Download url. Will be stored when first set. Example:http://cdn.xxx.com')
 
+    program.command('upload')
+        .description('upload files to cdn')
+        .action(function () {
+            init(uploadResourceToCdn);
+    });
+    program.command('download')
+        .description('download files from cdn')
+        .action(function () {
+            init(downloadResourceFromCdn);
+    });
+    program.parse(process.argv);
+})();
+
+function init(fn) {
     var accessKey = program.accessKey;
     var secretKey = program.secretKey;
     var keypreffix = program.keypreffix;
+    var downloadUrl = program.downloadUrl;
     var bucket = program.bucket;
     var folder = program.folder;
 
@@ -38,135 +54,158 @@ var readdir = thunkify(glob);
     var qtoolJson = readKey();
 
     if (isUndifined(folder)) {
-      console.log('Missing parameter folder');
-      return;
+        console.log('Missing parameter folder');
+        return;
     }
 
     if (isUndifined(accessKey) && isUndifined(qtoolJson.accessKey)) {
-      console.log('Missing parameter accessKey');
-      return;
+        console.log('Missing parameter accessKey');
+        return;
     } else if (!isUndifined(accessKey)) {
-      qtoolJson.accessKey = accessKey;
-      needUpdateKey = true;
+        qtoolJson.accessKey = accessKey;
+        needUpdateKey = true;
     }
 
     if (isUndifined(secretKey) && isUndifined(qtoolJson.secretKey)) {
-      console.log('Missing parameter secretKey');
-      return;
+        console.log('Missing parameter secretKey');
+        return;
     } else if (!isUndifined(secretKey)) {
-      qtoolJson.secretKey = secretKey;
-      needUpdateKey = true;
+        qtoolJson.secretKey = secretKey;
+        needUpdateKey = true;
     }
 
-    folder = path.resolve(folder);
-    if (isUndifined(bucket) && isUndifined(qtoolJson[folder])) {
-      console.log('Missing parameter bucket');
-      return;
+    if (isUndifined(bucket) && isUndifined(qtoolJson.bucket)) {
+        console.log('Missing parameter bucket');
+        return;
     } else if (!isUndifined(bucket)) {
-      qtoolJson[folder] = bucket;
-      needUpdateKey = true;
+        qtoolJson.bucket = bucket;
+        needUpdateKey = true;
+    }
+
+    if (isUndifined(downloadUrl) && isUndifined(qtoolJson.downloadUrl)) {
+        console.log('Missing parameter downloadUrl');
+        return;
+    } else if (!isUndifined(downloadUrl)) {
+        qtoolJson.downloadUrl = downloadUrl;
+        needUpdateKey = true;
     }
 
     needUpdateKey && writeKey(qtoolJson);
-    uploadResourceToCdn(folder, keypreffix, qtoolJson.accessKey, qtoolJson.secretKey, qtoolJson[folder]);
-})();
+    var client = qn.create({
+        accessKey: qtoolJson.accessKey,
+        secretKey: qtoolJson.secretKey,
+        bucket: qtoolJson.bucket,
+        origin: qtoolJson.downloadUrl
+    })
 
-function* getResourcesPath(folder) {
-  var pattern = folder + '/**/*.{jpg,png,svg,html,js,css}';
-  var files = yield readdir(pattern, {nodir: true, realpath: true});
-
-  return files;
+    folder = path.resolve(folder);
+    fn && fn(client, folder, keypreffix)
 }
 
-function uploadResource(accessKey, secretKey) {
-  var qiniu = require("qiniu");
-  //需要填写你的 Access Key 和 Secret Key
-  qiniu.conf.ACCESS_KEY = accessKey;
-  qiniu.conf.SECRET_KEY = secretKey;
+function* getResourcesPath(folder) {
+    var pattern = folder + '/**/*.{jpg,png,svg,html,js,css}';
+    var files = yield readdir(pattern, {nodir: true, realpath: true});
 
-  return function(filePath, keyName, bucketName) {
-    return new Promise(function(resolve, reject) {
-     //要上传的空间
-     var bucket = bucketName;
-
-     //上传到七牛后保存的文件名
-     var key = keyName;
-     //构建上传策略函数
-     function uptoken(bucket, key) {
-       var putPolicy = new qiniu.rs.PutPolicy(bucket+":"+key);
-       return putPolicy.token();
-     }
-     //生成上传 Token
-     var token = uptoken(bucket, key);
-     //要上传文件的本地路径
-     var localFile = filePath;
-
-     //上传
-     var extra = new qiniu.io.PutExtra();
-     qiniu.io.putFile(token, key, localFile, extra, function(err, ret) {
-       if(!err) {
-         // 上传成功， 处理返回值
-         console.log(ret.hash, key, 'successed');
-         resolve(key + ' ' + ret.hash);
-       } else {
-         // 上传失败， 处理返回代码
-         console.log(err, 'failed');
-         reject(err);
-       }
-     });
-    });
-  }
+    return files;
 }
 
 function isUndifined(value) {
-  return typeof(value) === 'undefined';
+    return typeof(value) === 'undefined';
 }
 
 function writeKey(qtoolJson) {
-  qtoolJson = qtoolJson || {};
+    qtoolJson = qtoolJson || {};
 
-  try {
-    var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
-    var configStr = JSON.stringify(qtoolJson, null, 4);
-		fs.writeFileSync(qtoolConfigFilePath, configStr);
-	} catch (err) {
-    console.log(err);
-	}
+    try {
+        var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
+        var configStr = JSON.stringify(qtoolJson, null, 4);
+        fs.writeFileSync(qtoolConfigFilePath, configStr);
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function readKey() {
-	var qtoolJson;
-	try {
-		var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
-    console.log('Reading key from ' + qtoolConfigFilePath);
-		var qtoolContent = fs.readFileSync(qtoolConfigFilePath);
-		qtoolJson = JSON.parse(qtoolContent);
-	} catch (err) {
-	}
+    var qtoolJson;
+    try {
+        var qtoolConfigFilePath = path.join(os.homedir(), '.qtool');
+        console.log('Reading key from ' + qtoolConfigFilePath);
+        var qtoolContent = fs.readFileSync(qtoolConfigFilePath);
+        qtoolJson = JSON.parse(qtoolContent);
+    } catch (err) {
+    }
 
-	return qtoolJson || {};
+    return qtoolJson || {};
 }
 
-function uploadResourceToCdn(folder, keypreffix, accessKey, secretKey, bucket) {
-  var upload = uploadResource(accessKey, secretKey);
-  var baseFolder = path.resolve(folder);
-
-  co(getResourcesPath(baseFolder)).then(function(files) {
-    var allPromise = files.map(function(file) {
-      var filePath = file;
-      var index = file.indexOf(baseFolder) + baseFolder.length + 1;
-      var keyName = file.substring(index);
-      if (!isUndifined(keypreffix)) {
-        keyName = path.join(keypreffix, '/', keyName);
-      }
-
-      return upload(filePath, keyName, bucket);
+function uploadResourceToCdn(client, folder, keypreffix) {
+    var baseFolder = path.resolve(folder);
+    co(getResourcesPath(baseFolder)).then(function (files) {
+        var allPromise = files.map(function (file) {
+            var filePath = file;
+            var index = file.indexOf(baseFolder) + baseFolder.length + 1;
+            var keyName = file.substring(index);
+            if (!isUndifined(keypreffix)) {
+                keyName = path.join(keypreffix, '/', keyName);
+            }
+            return new Promise(function (resolve, reject) {
+                client.uploadFile(filePath, {key: keyName}, function (err, result) {
+                    if (!err) {
+                        console.log(result.key, 'upload successed');
+                        resolve(result);
+                    } else {
+                        console.log(result.key, 'upload failed');
+                        reject(err);
+                    }
+                })
+            })
+        });
+        return Promise.all(allPromise);
+    })
+    .then(function () {
+        console.log('upload all')
+    })
+    .catch(function (error) {
+        console.log(error);
     });
+}
 
-    return allPromise;
-  }).then(function() {
+function downloadResourceFromCdn(client, folder, keypreffix) {
+    var baseFolder = path.resolve(folder);
+    client.list(keypreffix, function (err, result) {
+        if (!err) {
+            result.items.map(function (file) {
+                return new Promise(function (resolve, reject) {
+                    client.download(file.key, function (err, content, res) {
+                        if (!err) {
+                            console.log(file.key, 'download successed');
+                            resolve(content)
+                        } else {
+                            console.log(file.key, 'download failed');
+                            reject(err)
+                        }
+                    })
+                }).then(function (content) {
+                  return new Promise(function (resolve, reject) {
+                    var dir = path.join(baseFolder, file.key);
+                    // 创建本地存储目录
+                    mkdirs(path.dirname(dir));
 
-  }).catch(function(error) {
-    console.log(error);
-  });
+                    fs.writeFile(dir, content, function(err) {
+                        if (!err) {
+                            resolve();
+                        } else {
+                            reject(err);
+                        }
+                    });
+                  });
+                }, function () {
+                }).catch(function (err) {
+                    console.log(err)
+                })
+            })
+        } else {
+            console.log(err)
+        }
+    })
 }
