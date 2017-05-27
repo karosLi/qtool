@@ -20,7 +20,7 @@ var thunkify = require("thunkify");
 var readdir = thunkify(glob);
 
 (function () {
-    program.version('0.1.0')
+    program.version('0.1.2')
         .usage('One tool to upload resource to qinniu')
         .option('-f, --folder <string>', 'Upload and download forder')
         .option('-k, --keypreffix <string>', 'Key preffix')
