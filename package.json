@@ -1,6 +1,6 @@
 {
   "name": "qtool",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "One tool to upload images to qinniu",
   "main": "qtool.js",
   "scripts": {

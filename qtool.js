@@ -19,7 +19,7 @@ var thunkify = require("thunkify");
 var readdir = thunkify(glob);
 
 (function () {
-    program.version('0.1.3')
+    program.version('0.1.4')
         .usage('One tool to upload resource to qinniu')
         .option('-f, --folder <string>', 'Upload and download forder')
         .option('-k, --keypreffix <string>', 'Key preffix')
@@ -175,7 +175,7 @@ function downloadResourceFromCdn(client, folder, keypreffix) {
         if (!err) {
             result.items.map(function (file) {
                 return new Promise(function (resolve, reject) {
-                    client.download(file.key, function (err, content, res) {
+                    client.download(encodeURIComponent(file.key), function (err, content, res) {
                         if (!err) {
                             console.log(file.key, 'download successed');
                             resolve(content)
