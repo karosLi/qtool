@@ -26,8 +26,8 @@ var readdir = thunkify(glob);
         .option('-k, --keypreffix <string>', 'Key preffix')
         .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
         .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
-        .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
-        .option('-h, --hostUrl <string>', 'Qiniu host url. Will be stored when first set. Example:http://cdn.xxx.com')
+        .option('-b, --bucket <string>', 'Bucket of qiniu. Will be stored when first set')
+        .option('-h, --hostUrl <string>', 'Qiniu host url. Will be stored when first set. Example: http://cdn.xxx.com')
 
     program.command('upload')
         .description('upload files to cdn')
