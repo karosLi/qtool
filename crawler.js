@@ -6,14 +6,14 @@ const fs = require('fs');
 const path = require('path')
 const request = require('request');
 const cheerio = require('cheerio');
-const mkdirp = require('mkdirp');
+const mkdirs = require('node-mkdirs');
 const Async = require('async');
 const phantom = require('phantom');
 
 const links = [];
 const url = 'http://m.leoao.com/act/youth_fit';
 const dir = '/Users/Eugene/Desktop/crawler';
-mkdirp(dir, function (err) {
+mkdirs(dir, function (err) {
     if (err) console.log(err);
 })
 

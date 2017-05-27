@@ -30,7 +30,6 @@
     "co": "^4.6.0",
     "commander": "^2.9.0",
     "glob": "^7.1.1",
-    "mkdirp": "^0.5.1",
     "node-mkdirs": "0.0.1",
     "phantom": "^4.0.3",
     "promise": "^7.1.1",

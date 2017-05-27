@@ -199,7 +199,6 @@ function downloadResourceFromCdn(client, folder, keypreffix) {
                         }
                     });
                   });
-                }, function () {
                 }).catch(function (err) {
                     console.log(err)
                 })
