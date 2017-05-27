@@ -27,7 +27,7 @@ var readdir = thunkify(glob);
         .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
         .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')
         .option('-b, --bucket <string>', 'Bucket to store image. Will be stored when first set')
-        .option('-d, --downloadUrl <string>', 'Download url. Will be stored when first set. Example:http://cdn.xxx.com')
+        .option('-h, --hostUrl <string>', 'Qiniu host url. Will be stored when first set. Example:http://cdn.xxx.com')
 
     program.command('upload')
         .description('upload files to cdn')
@@ -46,7 +46,7 @@ function init(fn) {
     var accessKey = program.accessKey;
     var secretKey = program.secretKey;
     var keypreffix = program.keypreffix;
-    var downloadUrl = program.downloadUrl;
+    var hostUrl = program.hostUrl;
     var bucket = program.bucket;
     var folder = program.folder;
 
@@ -82,11 +82,11 @@ function init(fn) {
         needUpdateKey = true;
     }
 
-    if (isUndifined(downloadUrl) && isUndifined(qtoolJson.downloadUrl)) {
-        console.log('Missing parameter downloadUrl');
+    if (isUndifined(hostUrl) && isUndifined(qtoolJson.hostUrl)) {
+        console.log('Missing parameter hostUrl');
         return;
-    } else if (!isUndifined(downloadUrl)) {
-        qtoolJson.downloadUrl = downloadUrl;
+    } else if (!isUndifined(hostUrl)) {
+        qtoolJson.hostUrl = hostUrl;
         needUpdateKey = true;
     }
 
@@ -95,7 +95,7 @@ function init(fn) {
         accessKey: qtoolJson.accessKey,
         secretKey: qtoolJson.secretKey,
         bucket: qtoolJson.bucket,
-        origin: qtoolJson.downloadUrl
+        origin: qtoolJson.hostUrl
     })
 
     folder = path.resolve(folder);
