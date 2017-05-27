@@ -22,7 +22,7 @@ var readdir = thunkify(glob);
 (function () {
     program.version('0.1.0')
         .usage('One tool to upload resource to qinniu')
-        .option('-f, --folder <string>', 'Resource forder')
+        .option('-f, --folder <string>', 'Upload and download forder')
         .option('-k, --keypreffix <string>', 'Key preffix')
         .option('-a, --accessKey <string>', 'Access Key. Will be stored when first set')
         .option('-s, --secretKey <string>', 'Secret Key. Will be stored when first set')

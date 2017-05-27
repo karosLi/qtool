@@ -51,4 +51,48 @@ Parameters detail:
 ## note
 Any issue please free let me know.
 
+# 中文版本
+`qtool` 安装方法：
+
+```
+npm install -g qtool
+```
+
+上传资源:
+
+```
+qtool upload  -f uploadfolder -a RSxpQIxNIS2vo0vuQR3HX701ddS9fdlUnQ5jV8ul -s xCLWczC5V5kyy7H85MNKNYcXT4wx9k5OzT7YDVFk -b mybucket -k activity -h olf3t4olk.bkt.clouddn.com
+```
+
+下载资源:
+
+```
+qtool download  -f downloadfolder -a RSxpQIxNIS2vo0vuQR3HX701ddS9fdlUnQ5jV8ul -s xCLWczC5V5kyy7H85MNKNYcXT4wx9k5OzT7YDVFk -b mybucket -k activity -h olf3t4olk.bkt.clouddn.com
+```
+
+
+参数说明:
+
+```
+-f, --folder <string> 
+    上传和下载目录
+    
+-k, --keypreffix <string> 
+    上传的时候，前缀会插入到 key 的前面。
+    下载的时候，前缀会被用于过滤七牛的cdn url。
+    
+-a, --accessKey <string>
+    access Key 七牛官网获取
+    
+-s, --secretKey <string> 
+    Secret Key 七牛官网获取
+      
+-b, --bucket <string>
+    上传和下载对象空间
+    
+-h, --hostUrl <string>
+    七牛 host url，比如：http://cdn.xxx.com    
+    
+```
+
 
