@@ -10,7 +10,6 @@ var path = require('path');
 var util = require('util');
 var Promise = require('promise');
 var co = require("co");
-var request = require('request');
 var mkdirs = require('node-mkdirs');
 var program = require('commander');
 var path = require('path');
@@ -20,7 +19,7 @@ var thunkify = require("thunkify");
 var readdir = thunkify(glob);
 
 (function () {
-    program.version('0.1.2')
+    program.version('0.1.3')
         .usage('One tool to upload resource to qinniu')
         .option('-f, --folder <string>', 'Upload and download forder')
         .option('-k, --keypreffix <string>', 'Key preffix')
