@@ -102,7 +102,7 @@ function init(fn) {
 }
 
 function* getResourcesPath(folder) {
-    var pattern = folder + '/**/*.{jpg,png,svg,html,js,css}';
+    var pattern = folder + '/**/*.{jpg,png,svg,html,js,css,zip,apk,ipa}';
     var files = yield readdir(pattern, {nodir: true, realpath: true});
 
     return files;
@@ -150,7 +150,7 @@ function uploadResourceToCdn(client, folder, keypreffix) {
             return new Promise(function (resolve, reject) {
                 client.uploadFile(filePath, {key: keyName}, function (err, result) {
                     if (!err) {
-                        console.log(result.key, 'upload successed');
+                        console.log(result.url, 'upload successed');
                         resolve(result);
                     } else {
                         console.log(filePath, 'upload failed');
